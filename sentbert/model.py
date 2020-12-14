@@ -13,7 +13,7 @@ class SentBert(pl.LightningModule):
         self.save_hyperparameters()
         self.bert = BertForSequenceClassification.from_pretrained('bert-base-uncased',
                                                                   num_labels=out_classes, return_dict=True)
-        self.f1 = F1(dist_sync_on_step=True)
+        self.f1 = F1(num_classes=out_classes)
 
     @staticmethod
     def add_argparse_args(parent_parser: ArgumentParser) -> ArgumentParser:
@@ -30,13 +30,14 @@ class SentBert(pl.LightningModule):
     def training_step(self, batch, *args, **kwargs):
         pred = self.bert(batch['input_ids'], batch['attention_mask'], labels=batch['label'])
         loss = pred['loss']
-        self.log('train_bce', loss, on_step=False, on_epoch=True, sync_dist=True)
+        self.log('train_ce', loss, on_step=False, on_epoch=True, sync_dist=True)
         return loss
 
     def validation_step(self, batch, *args, **kwargs):
-        pred = self.bert(batch['input_ids'], batch['attention_mask'])
+        pred = self.bert(batch['input_ids'], batch['attention_mask'], labels=batch['label'])
         self.f1(pred.logits, batch['label'])
         self.log('val_f1', self.f1, on_step=False, on_epoch=True)
+        self.log('val_ce', pred['loss'], on_step=False, on_epoch=True)
 
     def test_step(self, batch):
         pass

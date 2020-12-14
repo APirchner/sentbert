@@ -47,7 +47,7 @@ class SemEvalDataModule(pl.LightningDataModule):
                           pin_memory=torch.cuda.is_available(), num_workers=self.num_workers)
 
     def val_dataloader(self) -> Union[DataLoader, List[DataLoader]]:
-        return DataLoader(self.data_train, batch_size=self.batch_size,
+        return DataLoader(self.data_val, batch_size=self.batch_size,
                           shuffle=False, drop_last=False,
                           pin_memory=torch.cuda.is_available(), num_workers=self.num_workers)
 
