@@ -16,7 +16,6 @@ def main(args: Namespace) -> None:
     model = SentBert(out_classes=3, lr=args.learning_rate, weight_decay=args.weight_decay)
     trainer = pl.Trainer.from_argparse_args(
         args,
-        check_val_every_n_epoch=2,
         accelerator='ddp',
         auto_select_gpus=True,
         default_root_dir=args.log_dir,
@@ -24,6 +23,7 @@ def main(args: Namespace) -> None:
         profiler='simple'
     )
     trainer.fit(model=model, datamodule=data)
+    trainer.test()
 
 if __name__ == '__main__':
     argparser = ArgumentParser(add_help=True)
