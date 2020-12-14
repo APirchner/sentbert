@@ -28,8 +28,6 @@ class SentBert(pl.LightningModule):
         return self.bert(batch['input_ids'], batch['attention_mask'])
 
     def training_step(self, batch, *args, **kwargs):
-        print(batch['input_ids'].size())
-        print(batch['label'].size())
         pred = self.bert(batch['input_ids'], batch['attention_mask'], labels=batch['label'])
         loss = pred['loss']
         self.log('train_bce', loss, on_step=False, on_epoch=True, sync_dist=True)
