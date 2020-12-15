@@ -44,7 +44,6 @@ class SentBert(pl.LightningModule):
         self.f1(torch.argmax(pred['logits'], dim=1), batch['label'])
         self.log('val_ce', pred['loss'], on_step=False, on_epoch=True)
         self.log('val_acc', self.acc, on_step=False, on_epoch=True)
-        self.log('val_acc', self.f1, on_step=False, on_epoch=True)
         self.log('val_f1', self.f1, on_step=False, on_epoch=True)
 
     def test_step(self, batch, *args, **kwargs):
