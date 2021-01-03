@@ -10,14 +10,13 @@ def main(args: Namespace) -> None:
     data = SemEvalDataModule(
         path_train=args.path_train,
         path_val=args.path_val,
-        path_test=args.path_test,
         batch_size=args.batch_size,
         num_workers=args.workers
     )
     data.prepare_data()
     data.setup('fit')
     total_steps = args.max_epochs * len(data.data_train)
-    effective_steps = total_steps // (args.gpus * args.num_nodes * args.accumulate_grad_batches)
+    effective_steps = total_steps // (min(args.gpus, 1) * args.num_nodes * args.accumulate_grad_batches)
     model = SentBert(out_classes=3, lr=args.learning_rate,
                      weight_decay=args.weight_decay, train_steps=effective_steps)
     trainer = pl.Trainer.from_argparse_args(
@@ -29,8 +28,6 @@ def main(args: Namespace) -> None:
         profiler='simple'
     )
     trainer.fit(model=model, datamodule=data)
-    data.setup('test')
-    trainer.test()
 
 
 if __name__ == '__main__':

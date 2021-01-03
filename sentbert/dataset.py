@@ -10,24 +10,21 @@ from utils import encode_label
 
 
 class SemEvalDataModule(pl.LightningDataModule):
-    def __init__(self, path_train: str, path_val: str, path_test: str,
+    def __init__(self, path_train: str, path_val: str,
                  batch_size: int = 32, num_workers: int = 8):
         super(SemEvalDataModule, self).__init__()
         self._path_train = path_train
         self._path_val = path_val
-        self._path_test = path_test
         self.data_train = None
         self.data_val = None
-        self.data_test = None
         self.batch_size = batch_size
         self.num_workers = num_workers
 
     @staticmethod
     def add_argparse_args(parent_parser: ArgumentParser) -> ArgumentParser:
         argparser = ArgumentParser(parents=[parent_parser], add_help=False)
-        argparser.add_argument('--path_train', type=str, required=True, help='Path to training set tsv')
-        argparser.add_argument('--path_val', type=str, required=True, help='Path to validation set tsv')
-        argparser.add_argument('--path_test', type=str, required=True, help='Path to test set tsv')
+        argparser.add_argument('--path_train', type=str, required=True, help='Path to training set txt')
+        argparser.add_argument('--path_val', type=str, required=True, help='Path to validation set txt')
         argparser.add_argument('--batch_size', type=int, default=32, help='Batch size')
         argparser.add_argument('--workers', type=int, default=8, help='Number of dataset worker threads')
         return argparser
@@ -38,8 +35,6 @@ class SemEvalDataModule(pl.LightningDataModule):
             # build torch datasets
             self.data_train = SemEvalData(self._path_train, tokenizer)
             self.data_val = SemEvalData(self._path_val, tokenizer)
-        if stage == 'test' or stage is None:
-            self.data_test = SemEvalData(self._path_test, tokenizer)
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(self.data_train, batch_size=self.batch_size,
@@ -48,11 +43,6 @@ class SemEvalDataModule(pl.LightningDataModule):
 
     def val_dataloader(self) -> Union[DataLoader, List[DataLoader]]:
         return DataLoader(self.data_val, batch_size=self.batch_size,
-                          shuffle=False, drop_last=False,
-                          pin_memory=torch.cuda.is_available(), num_workers=self.num_workers)
-
-    def test_dataloader(self, *args, **kwargs) -> Union[DataLoader, List[DataLoader]]:
-        return DataLoader(self.data_test, batch_size=self.batch_size,
                           shuffle=False, drop_last=False,
                           pin_memory=torch.cuda.is_available(), num_workers=self.num_workers)
 
