@@ -7,17 +7,19 @@ from pytorch_lightning.metrics.classification import F1, Accuracy
 
 
 class SentBert(pl.LightningModule):
-    def __init__(self, out_classes: int = 3, lr: float = 1e-5, weight_decay: float = 1e-2, freeze_base: bool = False):
+    def __init__(self, out_classes: int = 3, lr: float = 1e-5,
+                 weight_decay: float = 1e-2, freeze_base: bool = False, train_steps: int = 100):
         super(SentBert, self).__init__()
         self.lr = lr
         self.weight_decay = weight_decay
+        self.train_steps = train_steps
         self.save_hyperparameters()
         self.bert = BertForSequenceClassification.from_pretrained(
             'bert-base-uncased', num_labels=out_classes, return_dict=True)
         if freeze_base:
             for param in self.bert.base_model.parameters():
                 param.requires_grad = False
-        self.f1 = F1(num_classes=out_classes)
+        self.f1 = F1(num_classes=out_classes, average='macro')
         self.acc = Accuracy()
 
     @staticmethod
@@ -52,12 +54,12 @@ class SentBert(pl.LightningModule):
         self.f1(torch.argmax(pred['logits'], dim=1), batch['label'])
         self.log('test_acc', self.acc, on_step=False, on_epoch=True)
         self.log('test_f1', self.f1, on_step=False, on_epoch=True)
-        self.log('test_ce', pred['loss'], on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
         optimizer = AdamW(params=self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
-        scheduler = get_linear_schedule_with_warmup(optimizer, 0, 241 * 10)
         return {
             'optimizer': optimizer,
-            'scheduler': scheduler
+            #'scheduler': get_linear_schedule_with_warmup(optimizer,
+            #                                             num_warmup_steps=100,
+            #                                             num_training_steps=self.train_steps)
         }

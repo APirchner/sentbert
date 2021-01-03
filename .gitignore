@@ -1,3 +1,6 @@
 /env
+/data/train_consol.txt
+/data/val_consol.txt
+/data/valtest_consol.txt
 /.idea
 /notebooks/.ipynb_checkpoints
