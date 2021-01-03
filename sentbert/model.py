@@ -56,10 +56,24 @@ class SentBert(pl.LightningModule):
         self.log('test_f1', self.f1, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
-        optimizer = AdamW(params=self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
-        return {
-            'optimizer': optimizer,
-            #'scheduler': get_linear_schedule_with_warmup(optimizer,
-            #                                             num_warmup_steps=100,
-            #                                             num_training_steps=self.train_steps)
+        no_decay = ["bias", "LayerNorm.weight"]
+        optimizer_grouped_parameters = [
+            {
+                'params': [p for n, p in self.bert.named_parameters() if not any(nd in n for nd in no_decay)],
+                'weight_decay': self.weight_decay,
+            },
+            {
+                'params': [p for n, p in self.bert.named_parameters() if any(nd in n for nd in no_decay)],
+                'weight_decay': 0.0,
+            },
+        ]
+        optimizer = AdamW(params=optimizer_grouped_parameters, lr=self.lr, eps=1e-8)
+        scheduler = get_linear_schedule_with_warmup(
+            optimizer, num_warmup_steps=self.train_steps // 100, num_training_steps=self.train_steps
+        )
+        scheduler = {
+            'scheduler': scheduler,
+            'interval': 'step',
+            'frequency': 1
         }
+        return [optimizer], [scheduler]
