@@ -23,8 +23,8 @@ class SemEvalDataModule(pl.LightningDataModule):
     @staticmethod
     def add_argparse_args(parent_parser: ArgumentParser) -> ArgumentParser:
         argparser = ArgumentParser(parents=[parent_parser], add_help=False)
-        argparser.add_argument('--path_train', type=str, required=True, help='Path to training set txt')
-        argparser.add_argument('--path_val', type=str, required=True, help='Path to validation set txt')
+        argparser.add_argument('--path_train', type=str, help='Path to training set txt')
+        argparser.add_argument('--path_val', type=str, help='Path to validation set txt')
         argparser.add_argument('--batch_size', type=int, default=32, help='Batch size')
         argparser.add_argument('--workers', type=int, default=8, help='Number of dataset worker threads')
         return argparser
