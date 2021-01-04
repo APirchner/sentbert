@@ -16,7 +16,7 @@ def main(args: Namespace) -> None:
         num_workers=args.workers
     )
     model = SentBert.load_from_checkpoint(checkpoint_path=args.checkpoint)
-    trainer = pl.Trainer.from_argparse_args(args, logger=False)
+    trainer = pl.Trainer.from_argparse_args(args, logger=False, checkpoint_callback=False)
     trainer.test(model, test_dataloaders=data_test)
 
 

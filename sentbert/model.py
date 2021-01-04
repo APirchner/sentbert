@@ -21,7 +21,8 @@ class SentBert(pl.LightningModule):
             for param in self.bert.base_model.parameters():
                 param.requires_grad = False
         self.f1 = F1(num_classes=out_classes, average='macro')
-        self.acc = Accuracy()
+        self.train_acc = Accuracy()
+        self.val_acc = Accuracy()
 
     @staticmethod
     def add_argparse_args(parent_parser: ArgumentParser) -> ArgumentParser:
@@ -40,20 +41,22 @@ class SentBert(pl.LightningModule):
     def training_step(self, batch, *args, **kwargs):
         pred = self.bert(batch['input_ids'], batch['attention_mask'], labels=batch['label'])
         loss = pred['loss']
+        self.train_acc(torch.argmax(pred['logits'], dim=1), batch['label'])
         self.log('train_ce', loss, on_step=False, on_epoch=True, sync_dist=True)
+        self.log('train_acc', self.train_acc, on_step=False, on_epoch=True, sync_dist=True)
         return loss
 
     def validation_step(self, batch, *args, **kwargs):
         pred = self.bert(batch['input_ids'], batch['attention_mask'], labels=batch['label'])
-        self.acc(torch.argmax(pred['logits'], dim=1), batch['label'])
+        self.val_acc(torch.argmax(pred['logits'], dim=1), batch['label'])
         self.f1(torch.argmax(pred['logits'], dim=1), batch['label'])
         self.log('val_ce', pred['loss'], on_step=False, on_epoch=True, sync_dist=True)
-        self.log('val_acc', self.acc, on_step=False, on_epoch=True, sync_dist=True)
+        self.log('val_acc', self.val_acc, on_step=False, on_epoch=True, sync_dist=True)
         self.log('val_f1', self.f1, on_step=False, on_epoch=True, sync_dist=True)
 
     def test_step(self, batch, *args, **kwargs):
         pred = self.bert(batch['input_ids'], batch['attention_mask'], labels=batch['label'])
-        self.acc(torch.argmax(pred['logits'], dim=1), batch['label'])
+        self.val_acc(torch.argmax(pred['logits'], dim=1), batch['label'])
         self.f1(torch.argmax(pred['logits'], dim=1), batch['label'])
         self.log('test_acc', self.acc, on_step=False, on_epoch=True, sync_dist=True)
         self.log('test_f1', self.f1, on_step=False, on_epoch=True, sync_dist=True)
