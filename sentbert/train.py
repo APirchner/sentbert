@@ -17,7 +17,7 @@ def main(args: Namespace) -> None:
     data.setup('fit')
     total_steps = args.max_epochs * len(data.data_train)
     effective_steps = total_steps // (min(args.gpus, 1) * args.num_nodes * args.accumulate_grad_batches)
-    model = SentBert(out_classes=3, lr=args.learning_rate,
+    model = SentBert(out_classes=3, lr_bert=args.lr_bert, lr_class=args.lr_class,
                      weight_decay=args.weight_decay, train_steps=effective_steps)
     trainer = pl.Trainer.from_argparse_args(
         args,

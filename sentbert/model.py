@@ -7,10 +7,11 @@ from pytorch_lightning.metrics.classification import F1, Accuracy, Precision, Re
 
 
 class SentBert(pl.LightningModule):
-    def __init__(self, out_classes: int = 3, lr: float = 1e-5,
+    def __init__(self, out_classes: int = 3, lr_bert: float = 1e-5, lr_class: float = 1e-4,
                  weight_decay: float = 1e-2, freeze_base: bool = False, train_steps: int = 100):
         super(SentBert, self).__init__()
-        self.lr = lr
+        self.lr_bert = lr_bert
+        self.lr_class = lr_class
         self.weight_decay = weight_decay
         self.train_steps = train_steps
         self.save_hyperparameters()
@@ -25,9 +26,11 @@ class SentBert(pl.LightningModule):
     @staticmethod
     def add_argparse_args(parent_parser: ArgumentParser) -> ArgumentParser:
         argparser = ArgumentParser(parents=[parent_parser], add_help=False)
-        argparser.add_argument('--learning_rate', type=float, default='1e-5',
-                               help='The learning rate')
-        argparser.add_argument('--weight_decay', type=float, default='1e-2',
+        argparser.add_argument('--lr_bert', type=float, default=1e-5,
+                               help='The learning rate for BERT')
+        argparser.add_argument('--lr_class', type=float, default=1e-4,
+                               help='The learning rate for the classification head')
+        argparser.add_argument('--weight_decay', type=float, default=1e-2,
                                help='The weight decay')
         return argparser
 
@@ -60,24 +63,26 @@ class SentBert(pl.LightningModule):
         optimizer_grouped_parameters = [
             {
                 'params': [p for n, p in self.bert.bert.named_parameters() if not any(nd in n for nd in no_decay)],
+                'lr': self.lr_bert,
                 'weight_decay': self.weight_decay,
             },
             {
                 'params': [p for n, p in self.bert.bert.named_parameters() if any(nd in n for nd in no_decay)],
+                'lr': self.lr_bert,
                 'weight_decay': 0.0,
             },
             {
                 'params': [p for n, p in self.bert.classifier.named_parameters() if 'bias' not in n],
-                'lr': 10 * self.lr,
+                'lr': self.lr_class,
                 'weight_decay': self.weight_decay,
             },
             {
                 'params': [p for n, p in self.bert.classifier.named_parameters() if 'bias' in n],
-                'lr': 10 * self.lr,
+                'lr': self.lr_class,
                 'weight_decay': 0,
             }
         ]
-        optimizer = AdamW(params=optimizer_grouped_parameters, lr=self.lr, eps=1e-8)
+        optimizer = AdamW(params=optimizer_grouped_parameters, eps=1e-8)
         scheduler = get_linear_schedule_with_warmup(
             optimizer, num_warmup_steps=self.train_steps // 100, num_training_steps=self.train_steps
         )
