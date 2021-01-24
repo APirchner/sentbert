@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 import torch
 from transformers import BertForSequenceClassification, AdamW, get_linear_schedule_with_warmup
 import pytorch_lightning as pl
-from pytorch_lightning.metrics.classification import F1, Accuracy, Precision, Recall
+from pytorch_lightning.metrics.classification import F1, Accuracy
 
 
 class SentBert(pl.LightningModule):
@@ -58,7 +58,7 @@ class SentBert(pl.LightningModule):
         pred = self.bert(batch['input_ids'], batch['attention_mask'], labels=batch['label'])
         self.val_acc(torch.argmax(pred['logits'], dim=1), batch['label'])
         self.f1(torch.argmax(pred['logits'], dim=1), batch['label'])
-        self.log('test_acc', self.acc, on_step=False, on_epoch=True, sync_dist=True)
+        self.log('test_acc', self.val_acc, on_step=False, on_epoch=True, sync_dist=True)
         self.log('test_f1', self.f1, on_step=False, on_epoch=True, sync_dist=True)
 
     def configure_optimizers(self):
