@@ -4,6 +4,8 @@ BERT fine-tuning for Twitter sentiment analysis
 
 The aim of this repo is to fine-tune a BERT model for Twitter sentiment analysis,
 i.e. classification into negative, neutral and positive tweets.
+In the future, this repo will also include a Dockerfile providing an endpoint
+for serving the fine-tuned model with `Torchserve <https://pytorch.org/serve/>`_
 
 The code is mainly built on top of
 the BERT implementation with pretrained weights from the `Hugging Face <https://huggingface.co/>`_ library and
