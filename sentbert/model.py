@@ -87,7 +87,7 @@ class SentBert(pl.LightningModule):
         ]
         optimizer = AdamW(params=optimizer_grouped_parameters, eps=1e-8)
         scheduler = get_linear_schedule_with_warmup(
-            optimizer, num_warmup_steps=self.train_steps // 100, num_training_steps=self.train_steps
+            optimizer, num_warmup_steps=100, num_training_steps=self.train_steps
         )
         scheduler = {
             'scheduler': scheduler,
